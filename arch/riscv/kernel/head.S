@@ -1,4 +1,6 @@
     .extern start_kernel
+    .extern mm_init
+    .extern task_init
     .section .text.init
     .globl _start
 _start:
@@ -10,6 +12,9 @@ _start:
     # set stvec = _traps
     la t0, _traps
     csrw stvec, t0
+    # initialize memory & task
+    jal mm_init
+    jal task_init
     # set sie[STIE] = 1
     csrr t0, sie
     li t1, 0x00000020

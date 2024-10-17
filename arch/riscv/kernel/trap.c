@@ -1,6 +1,7 @@
 #include "stdint.h"
 #include "printk.h"
 #include "sbi.h"
+#include "proc.h"
 
 void trap_handler(uint64_t scause, uint64_t sepc) {
     // 通过 `scause` 判断 trap 类型
@@ -12,8 +13,9 @@ void trap_handler(uint64_t scause, uint64_t sepc) {
         // interrupt
         if ((scause & (((uint64_t)1 << 63) - 1)) == 5) {
             // timer interrupt
-            printk("timer interrupt, time: %llu\n", get_cycles());
+            // printk("timer interrupt, time: %llu\n", get_cycles());
             clock_set_next_event();
+            do_timer();
         } else {
             printk("unknown interrupt code: 0x%llx\n", (scause & (((uint64_t)1 << 63) - 1)));
         }

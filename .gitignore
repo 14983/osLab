@@ -58,3 +58,4 @@ dkms.conf
 arch/riscv/boot/Image
 vmlinux
 vmlinux.asm
+.vscode

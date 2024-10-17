@@ -1,4 +1,7 @@
     .extern trap_handler
+    .extern dummy
+    .globl __dummy
+    .globl __switch_to
     .section .text.entry
     .align 2
     .globl _traps 
@@ -146,3 +149,74 @@ _traps:
 
     # 4. return from trap
     sret
+
+__dummy:
+    la t0, dummy
+    csrw sepc, t0
+    sret
+
+__switch_to:
+    # save state to prev process
+    add t0, a0, x0
+    addi t0, t0, 32 # state, ..., pid
+    sd ra, 0(t0)
+    addi t0, t0, 8
+    sd sp, 0(t0)
+    addi t0, t0, 8
+    sd s0, 0(t0)
+    addi t0, t0, 8
+    sd s1, 0(t0)
+    addi t0, t0, 8
+    sd s2, 0(t0)
+    addi t0, t0, 8
+    sd s3, 0(t0)
+    addi t0, t0, 8
+    sd s4, 0(t0)
+    addi t0, t0, 8
+    sd s5, 0(t0)
+    addi t0, t0, 8
+    sd s6, 0(t0)
+    addi t0, t0, 8
+    sd s7, 0(t0)
+    addi t0, t0, 8
+    sd s8, 0(t0)
+    addi t0, t0, 8
+    sd s9, 0(t0)
+    addi t0, t0, 8
+    sd s10, 0(t0)
+    addi t0, t0, 8
+    sd s11, 0(t0)
+
+
+    # restore state from next process
+    add t0, a1, x0
+    addi t0, t0, 32 # state, ..., pid
+    ld ra, 0(t0)
+    addi t0, t0, 8
+    ld sp, 0(t0)
+    addi t0, t0, 8
+    ld s0, 0(t0)
+    addi t0, t0, 8
+    ld s1, 0(t0)
+    addi t0, t0, 8
+    ld s2, 0(t0)
+    addi t0, t0, 8
+    ld s3, 0(t0)
+    addi t0, t0, 8
+    ld s4, 0(t0)
+    addi t0, t0, 8
+    ld s5, 0(t0)
+    addi t0, t0, 8
+    ld s6, 0(t0)
+    addi t0, t0, 8
+    ld s7, 0(t0)
+    addi t0, t0, 8
+    ld s8, 0(t0)
+    addi t0, t0, 8
+    ld s9, 0(t0)
+    addi t0, t0, 8
+    ld s10, 0(t0)
+    addi t0, t0, 8
+    ld s11, 0(t0)
+
+    ret
