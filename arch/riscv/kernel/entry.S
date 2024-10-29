@@ -145,7 +145,6 @@ _traps:
     # addi sp, sp, 8
     ld x1, 0(sp)
     addi sp, sp, 8
-    ld t0, 0(sp)
 
     # 4. return from trap
     sret

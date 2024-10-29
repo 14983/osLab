@@ -21,13 +21,13 @@ void task_init() {
     // 5. 将 current 和 task[0] 指向 idle
 
     void *idle_task_page = kalloc();
-    struct task_struct *idle_task = (struct task_struct*)idle_task_page;
-    idle_task -> state = TASK_RUNNING;
-    idle_task -> counter = 0;
-    idle_task -> priority = 0;
-    idle_task -> pid = 0;
-    current = idle_task;
-    task[0] = idle_task;
+    idle = (struct task_struct*)idle_task_page;
+    idle -> state = TASK_RUNNING;
+    idle -> counter = 0;
+    idle -> priority = 0;
+    idle -> pid = 0;
+    current = idle;
+    task[0] = idle;
 
     // 1. 参考 idle 的设置，为 task[1] ~ task[NR_TASKS - 1] 进行初始化
     // 2. 其中每个线程的 state 为 TASK_RUNNING, 此外，counter 和 priority 进行如下赋值：
@@ -118,7 +118,7 @@ void schedule() {
         }
         if (time_slice > 0) break;
         printk("\n");
-        for (int i = 0; i < NR_TASKS; i++) {
+        for (int i = 1; i < NR_TASKS; i++) {
             task[i] -> counter = task[i] -> priority;
             printk("SET [PID = %d PRIORITY = %d COUNTER = %d]\n", task[i] -> pid, task[i] -> priority, task[i] -> counter);
         }
