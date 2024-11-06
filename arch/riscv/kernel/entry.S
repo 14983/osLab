@@ -159,63 +159,36 @@ __switch_to:
     add t0, a0, x0
     addi t0, t0, 32 # state, ..., pid
     sd ra, 0(t0)
-    addi t0, t0, 8
-    sd sp, 0(t0)
-    addi t0, t0, 8
-    sd s0, 0(t0)
-    addi t0, t0, 8
-    sd s1, 0(t0)
-    addi t0, t0, 8
-    sd s2, 0(t0)
-    addi t0, t0, 8
-    sd s3, 0(t0)
-    addi t0, t0, 8
-    sd s4, 0(t0)
-    addi t0, t0, 8
-    sd s5, 0(t0)
-    addi t0, t0, 8
-    sd s6, 0(t0)
-    addi t0, t0, 8
-    sd s7, 0(t0)
-    addi t0, t0, 8
-    sd s8, 0(t0)
-    addi t0, t0, 8
-    sd s9, 0(t0)
-    addi t0, t0, 8
-    sd s10, 0(t0)
-    addi t0, t0, 8
-    sd s11, 0(t0)
-
+    sd sp, 8(t0)
+    sd s0, 16(t0)
+    sd s1, 24(t0)
+    sd s2, 32(t0)
+    sd s3, 40(t0)
+    sd s4, 48(t0)
+    sd s5, 56(t0)
+    sd s6, 64(t0)
+    sd s7, 72(t0)
+    sd s8, 80(t0)
+    sd s9, 88(t0)
+    sd s10, 96(t0)
+    sd s11, 104(t0)
 
     # restore state from next process
     add t0, a1, x0
     addi t0, t0, 32 # state, ..., pid
     ld ra, 0(t0)
-    addi t0, t0, 8
-    ld sp, 0(t0)
-    addi t0, t0, 8
-    ld s0, 0(t0)
-    addi t0, t0, 8
-    ld s1, 0(t0)
-    addi t0, t0, 8
-    ld s2, 0(t0)
-    addi t0, t0, 8
-    ld s3, 0(t0)
-    addi t0, t0, 8
-    ld s4, 0(t0)
-    addi t0, t0, 8
-    ld s5, 0(t0)
-    addi t0, t0, 8
-    ld s6, 0(t0)
-    addi t0, t0, 8
-    ld s7, 0(t0)
-    addi t0, t0, 8
-    ld s8, 0(t0)
-    addi t0, t0, 8
-    ld s9, 0(t0)
-    addi t0, t0, 8
-    ld s10, 0(t0)
-    addi t0, t0, 8
-    ld s11, 0(t0)
+    ld sp, 8(t0)
+    ld s0, 16(t0)
+    ld s1, 24(t0)
+    ld s2, 32(t0)
+    ld s3, 40(t0)
+    ld s4, 48(t0)
+    ld s5, 56(t0)
+    ld s6, 64(t0)
+    ld s7, 72(t0)
+    ld s8, 80(t0)
+    ld s9, 88(t0)
+    ld s10, 96(t0)
+    ld s11, 104(t0)
 
     ret
