@@ -1,3 +1,8 @@
+/*
+ * Note: VM_START and PHY_START are used in arch/riscv/kernel/head.S
+ * If the definition is changed, please also edit head.S
+ */
+
 #ifndef __DEFS_H__
 #define __DEFS_H__
 
@@ -23,5 +28,18 @@
 #define PGSIZE 0x1000 // 4 KiB
 #define PGROUNDUP(addr) ((addr + PGSIZE - 1) & (~(PGSIZE - 1)))
 #define PGROUNDDOWN(addr) (addr & (~(PGSIZE - 1)))
+
+#define OPENSBI_SIZE (0x200000)
+
+#define VM_START (0xffffffe000000000)
+#define VM_END (0xffffffff00000000)
+#define VM_SIZE (VM_END - VM_START)
+
+#define PA2VA_OFFSET (VM_START - PHY_START)
+
+#define PGTBL_VALID (0x0000000000000001)
+#define PGTBL_R     (0x0000000000000002)
+#define PGTBL_W     (0x0000000000000004)
+#define PGTBL_X     (0x0000000000000008)
 
 #endif
