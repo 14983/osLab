@@ -52,15 +52,15 @@ relocate:
     li t0, 0xFFFFFFDF80000000
     add ra, ra, t0
     add sp, sp, t0
-    la t1, early_pgtbl # TODO: why phy address
+    la t1, early_pgtbl
     li t2, 12
     srl t1, t1, t2 # calculate PPN
     li t0, 8 # mode: Sv39
     li t2, 60
     sll t0, t0, t2 # calculate MODE
     add t0, t0, t1
+    sfence.vma
     csrw satp, t0
-    sfence.vma zero, zero
     ret
 
     .section .bss.stack

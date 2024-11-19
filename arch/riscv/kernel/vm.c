@@ -81,14 +81,14 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
             base_addr[offset] = PGTBL_VALID | (((uint64_t)tmp - PA2VA_OFFSET) >> 12 << 10);
         }
         // second level
-        base_addr = (uint64_t *)(base_addr[offset] >> 10 << 12);
+        base_addr = (uint64_t *)((base_addr[offset] >> 10 << 12) + PA2VA_OFFSET);
         offset = (va >> 21) & (((uint64_t)1 << 9) - 1);
         if ((base_addr[offset] & PGTBL_VALID) == (uint64_t)0) {
             tmp = (uint64_t *)kalloc();
             base_addr[offset] = PGTBL_VALID | (((uint64_t)tmp - PA2VA_OFFSET) >> 12 << 10);
         }
         // third level
-        base_addr = (uint64_t *)(base_addr[offset] >> 10 << 12);
+        base_addr = (uint64_t *)((base_addr[offset] >> 10 << 12) + PA2VA_OFFSET);
         offset = (va >> 12) & (((uint64_t)1 << 9) - 1);
         base_addr[offset] = perm | ((uint64_t)pa >> 12 << 10);
     }
