@@ -49,6 +49,10 @@ _start:
 
 relocate:
     # t2 is used as offset
+    li t1, 0xFFFFFFDF80000000
+    la t2, relocate_ret
+    add t2, t2, t1
+    csrw stvec, t2
     li t0, 0xFFFFFFDF80000000
     add ra, ra, t0
     add sp, sp, t0
@@ -61,6 +65,7 @@ relocate:
     add t0, t0, t1
     sfence.vma
     csrw satp, t0
+relocate_ret:
     ret
 
     .section .bss.stack

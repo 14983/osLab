@@ -24,7 +24,7 @@ void setup_vm() {
      * 3. Page Table Entry 的权限 V | R | W | X 位设置为 1
     **/
     // need to set 2 early_pgtbl: 
-    early_pgtbl[(PHY_START >> 30) % 512] = PGTBL_VALID | PGTBL_R | PGTBL_W | PGTBL_X | ((PHY_START >> 12 << 10) & (((uint64_t)1 << 54) - 1));
+    // early_pgtbl[(PHY_START >> 30) % 512] = PGTBL_VALID | PGTBL_R | PGTBL_W | PGTBL_X | ((PHY_START >> 12 << 10) & (((uint64_t)1 << 54) - 1));
     early_pgtbl[(VM_START  >> 30) % 512] = PGTBL_VALID | PGTBL_R | PGTBL_W | PGTBL_X | ((PHY_START >> 12 << 10) & (((uint64_t)1 << 54) - 1));
     printk("...setup_vm done!\n");
 }
