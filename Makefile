@@ -17,6 +17,7 @@ BIOS    := default
 
 .PHONY:all run debug clean
 all: clean
+	$(MAKE) -C user all
 	$(MAKE) -C lib all
 	$(MAKE) -C init all
 	$(MAKE) -C arch/riscv all
@@ -31,6 +32,7 @@ debug: all
 	@qemu-system-riscv64 -nographic -machine virt -kernel vmlinux -bios $(BIOS) -S -s
 
 clean:
+	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
 	$(MAKE) -C init clean
 	$(MAKE) -C arch/riscv clean

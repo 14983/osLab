@@ -42,4 +42,7 @@
 #define PGTBL_W     (0x0000000000000004)
 #define PGTBL_X     (0x0000000000000008)
 
+#define USER_START (0x0000000000000000) // user space start virtual address
+#define USER_END (0x0000004000000000) // user space end virtual address
+
 #endif

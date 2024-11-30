@@ -59,3 +59,8 @@ arch/riscv/boot/Image
 vmlinux
 vmlinux.asm
 .vscode
+
+# lab 4
+user/uapp
+*.bin
+*.asm
