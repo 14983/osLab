@@ -7,6 +7,17 @@
     .globl _traps 
 _traps:
     # 1. save 32 registers and sepc to stack
+    sd t0, -8(sp) # save 2 temp regs in user stack
+    sd t1, -16(sp)
+    addi t0, sp, 0 # save user/kernel sp to tmp regs
+    csrr t1, sscratch
+    beq t1, x0, pre_trap_no_swap
+    csrw sscratch, t0 # swap user/kernel sp
+    addi sp, t1, 0
+pre_trap_no_swap:
+    ld t1, -16(t0) # save temp regs
+    ld t0, -8(t0)
+
     addi sp, sp, -8
     sd x1, 0(sp)
     # no use to save x2
@@ -77,6 +88,7 @@ _traps:
     # 2. call trap_handler
     csrr a0, scause
     csrr a1, sepc
+    addi a2, sp, 0
     jal trap_handler
 
     # 3. restore sepc and 32 registers (x2(sp) should be restore last) from stack
@@ -146,12 +158,27 @@ _traps:
     ld x1, 0(sp)
     addi sp, sp, 8
 
+    # 1. save 32 registers and sepc to stack
+    sd t0, -8(sp) # save 2 temp regs in kernel stack
+    sd t1, -16(sp)
+    addi t0, sp, 0 # save user/kernel sp to tmp regs
+    csrr t1, sscratch
+    beq t1, x0, post_trap_no_swap
+    csrw sscratch, t0 # swap user/kernel sp
+    addi sp, t1, 0
+post_trap_no_swap:
+    ld t1, -16(t0) # save temp regs
+    ld t0, -8(t0)
+
     # 4. return from trap
     sret
 
 __dummy:
-    la t0, dummy
-    csrw sepc, t0
+    # swap sp and sscratch
+    csrr t0, sscratch
+    addi t1, sp, 0
+    csrw sscratch, t1
+    addi sp, t0, 0
     sret
 
 __switch_to:
@@ -172,6 +199,12 @@ __switch_to:
     sd s9, 88(t0)
     sd s10, 96(t0)
     sd s11, 104(t0)
+    csrr t1, sepc
+    sd t1, 112(t0)
+    csrr t1, sstatus
+    sd t1, 120(t0)
+    csrr t1, sscratch
+    sd t1, 128(t0)
 
     # restore state from next process
     add t0, a1, x0
@@ -190,5 +223,22 @@ __switch_to:
     ld s9, 88(t0)
     ld s10, 96(t0)
     ld s11, 104(t0)
+    ld t1, 112(t0)
+    csrw sepc, t1
+    ld t1, 120(t0)
+    csrw sstatus, t1
+    ld t1, 128(t0)
+    csrw sscratch, t1
+
+    ld t1, 136(t0) # pgd
+    li t2, 12
+    srl t1, t1, t2 # calculate PPN
+    li t0, 8 # mode: Sv39
+    li t2, 60
+    sll t0, t0, t2 # calculate MODE
+    add t0, t0, t1
+    sfence.vma
+    csrw satp, t0
+    sfence.vma
 
     ret

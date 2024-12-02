@@ -10,8 +10,7 @@ ABI		:=	lp64
 
 INCLUDE	:=	-I $(shell pwd)/include -I $(shell pwd)/arch/riscv/include
 CF		:=	-march=$(ISA) -mabi=$(ABI) -mcmodel=medany -fno-builtin -ffunction-sections -fdata-sections -nostartfiles -nostdlib -nostdinc -static -lgcc -Wl,--nmagic -Wl,--gc-sections -g -fno-pie
-TEST_SCHED  :=  0
-CFLAG   :=  $(CF) $(INCLUDE) -DTEST_SCHED=$(TEST_SCHED)
+CFLAG   :=  $(CF) $(INCLUDE)
 
 BIOS    := default
 

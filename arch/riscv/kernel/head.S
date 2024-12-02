@@ -20,8 +20,8 @@ _start:
     csrw stvec, t0
     # initialize memory & task
     jal mm_init
-    jal task_init
     jal setup_vm_final
+    jal task_init
     # set sie[STIE] = 1
     csrr t0, sie
     li t1, 0x00000020
@@ -40,10 +40,11 @@ _start:
     li a7, 0x54494d45
     ecall
     # set sstatus[SIE] = 1
-    csrr t0, sstatus
-    li t1, 0x00000002
-    or t0, t0, t1
-    csrw sstatus, t0
+    ## lab 4 update: delete
+    # csrr t0, sstatus
+    # li t1, 0x00000002
+    # or t0, t0, t1
+    # csrw sstatus, t0
     # jump to start_kernel
     jal start_kernel
 

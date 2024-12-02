@@ -74,7 +74,7 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
     uint64_t offset, *base_addr, *tmp;
     for (uint64_t idx = 0; idx < size; idx++, va += 4096, pa += 4096) {
         // first level
-        base_addr = swapper_pg_dir;
+        base_addr = pgtbl;
         offset = (va >> 30) & (((uint64_t)1 << 9) - 1);
         if ((base_addr[offset] & PGTBL_VALID) == (uint64_t)0) {
             tmp = (uint64_t *)kalloc();

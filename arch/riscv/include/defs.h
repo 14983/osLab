@@ -41,8 +41,13 @@
 #define PGTBL_R     (0x0000000000000002)
 #define PGTBL_W     (0x0000000000000004)
 #define PGTBL_X     (0x0000000000000008)
+#define PGTBL_U     (0x0000000000000010)
 
 #define USER_START (0x0000000000000000) // user space start virtual address
 #define USER_END (0x0000004000000000) // user space end virtual address
+
+#define SSTATUS_SUM 18
+#define SSTATUS_SPP 8
+#define SSTATUS_SPIE 5
 
 #endif

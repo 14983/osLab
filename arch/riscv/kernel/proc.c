@@ -7,9 +7,15 @@
 extern void __dummy();
 extern void __switch_to(struct task_struct *prev, struct task_struct *next);
 
+extern uint64_t swapper_pg_dir[];
+extern char _sramdisk[];
+extern char _eramdisk[];
+
 struct task_struct *idle;           // idle process
 struct task_struct *current;        // 指向当前运行线程的 task_struct
 struct task_struct *task[NR_TASKS]; // 线程数组，所有的线程都保存在此
+
+void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint64_t perm);
 
 void task_init() {
     srand(2024);
@@ -45,18 +51,32 @@ void task_init() {
         task[i] -> priority = rand() % (PRIORITY_MAX - PRIORITY_MIN + 1) + PRIORITY_MIN;
         (task[i] -> thread).ra = (uint64_t)(__dummy);
         (task[i] -> thread).sp = (uint64_t)((void *)task[i] + PGSIZE);
+        (task[i] -> thread).sepc = USER_START;
+        (task[i] -> thread).sstatus = (1U << SSTATUS_SUM) | (0U << SSTATUS_SPP) | (1U << SSTATUS_SPIE);
+        (task[i] -> thread).sscratch = USER_END;
+        task[i] -> pgd = (uint64_t *)((uint64_t)kalloc() - PA2VA_OFFSET);
+        uint64_t *pgd_va = (uint64_t *)((uint64_t)(task[i] -> pgd) + PA2VA_OFFSET);
+        // copy kernel page table to user page table
+        for (int j = 256; j < 512; j++)
+            (pgd_va)[j] = swapper_pg_dir[j];
+        // user mode stack
+        uint64_t u_mode_stack_pa = (uint64_t)kalloc() - PA2VA_OFFSET;
+        create_mapping(pgd_va, USER_END - PGSIZE, u_mode_stack_pa, PGSIZE, PGTBL_W | PGTBL_R | PGTBL_U | PGTBL_VALID);
+        // u app (copied)
+        uint64_t *uapp_copy_pa = (uint64_t *)(alloc_pages(PGROUNDUP(_eramdisk - _sramdisk) >> 12) - PA2VA_OFFSET);
+        for (char *j = (char *)((uint64_t)uapp_copy_pa + PA2VA_OFFSET), *k = _sramdisk; k < _eramdisk; j++, k++) {
+            *j = *k;
+        }
+        create_mapping(pgd_va, 0, (uint64_t)uapp_copy_pa, _eramdisk - _sramdisk, PGTBL_R | PGTBL_W | PGTBL_X | PGTBL_U | PGTBL_VALID);
+        // test: print user page table
+        /*
+        for (int j = 0; j < 512; j++) {
+            printk("%d %llx\n", j, (pgd_va)[j]);
+        }
+        */
     }
-
     printk("...task_init done!\n");
 }
-
-#if TEST_SCHED
-#define MAX_OUTPUT ((NR_TASKS - 1) * 10)
-char tasks_output[MAX_OUTPUT];
-int tasks_output_index = 0;
-char expected_output[] = "2222222222111111133334222222222211111113";
-#include "sbi.h"
-#endif
 
 void dummy() {
     uint64_t MOD = 1000000007;
@@ -70,22 +90,6 @@ void dummy() {
             last_counter = current->counter;
             auto_inc_local_var = (auto_inc_local_var + 1) % MOD;
             printk("[PID = %d] is running. auto_inc_local_var = %d\n", current->pid, auto_inc_local_var);
-            #if TEST_SCHED
-            tasks_output[tasks_output_index++] = current->pid + '0';
-            if (tasks_output_index == MAX_OUTPUT) {
-                for (int i = 0; i < MAX_OUTPUT; ++i) {
-                    if (tasks_output[i] != expected_output[i]) {
-                        printk("\033[31mTest failed!\033[0m\n");
-                        printk("\033[31m    Expected: %s\033[0m\n", expected_output);
-                        printk("\033[31m    Got:      %s\033[0m\n", tasks_output);
-                        sbi_system_reset(SBI_SRST_RESET_TYPE_SHUTDOWN, SBI_SRST_RESET_REASON_NONE);
-                    }
-                }
-                printk("\033[32mTest passed!\033[0m\n");
-                printk("\033[32m    Output: %s\033[0m\n", expected_output);
-                sbi_system_reset(SBI_SRST_RESET_TYPE_SHUTDOWN, SBI_SRST_RESET_REASON_NONE);
-            }
-            #endif
         }
     }
 }
