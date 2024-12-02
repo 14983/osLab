@@ -3,6 +3,7 @@
 #include "proc.h"
 #include "stdlib.h"
 #include "printk.h"
+#include "elf.h"
 
 extern void __dummy();
 extern void __switch_to(struct task_struct *prev, struct task_struct *next);
@@ -16,6 +17,37 @@ struct task_struct *current;        // 指向当前运行线程的 task_struct
 struct task_struct *task[NR_TASKS]; // 线程数组，所有的线程都保存在此
 
 void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint64_t perm);
+
+void load_program(struct task_struct *task) {
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)_sramdisk;
+    Elf64_Phdr *phdrs = (Elf64_Phdr *)(_sramdisk + ehdr->e_phoff);
+    for (int i = 0; i < ehdr->e_phnum; ++i) {
+        Elf64_Phdr *phdr = phdrs + i;
+        if (phdr->p_type == PT_LOAD) {
+            printk(RED "ELF debugging: \n" CLEAR);
+            printk("\t" BLUE "pflag: " CLEAR "%x\n", phdr->p_flags);
+            printk("\t" BLUE "vaddr: " CLEAR "%x\n", phdr->p_vaddr);
+            printk("\t" BLUE "memsz: " CLEAR "%x\n", phdr->p_memsz);
+            printk("\t" BLUE "offset: " CLEAR "%x\n", phdr->p_offset);
+            printk("\t" BLUE "filesz: " CLEAR "%x\n", phdr->p_filesz);
+            uint64_t perm = PGTBL_U | ((phdr -> p_flags) << 1) | PGTBL_VALID;
+            // [start_va, end_file_va): ELF segment
+            // [end_file_va, end_va): 0
+            uint64_t start_va      = (uint64_t)(phdr -> p_vaddr);
+            uint64_t end_file_va   = (uint64_t)(start_va + phdr -> p_filesz);
+            uint64_t end_va        = (uint64_t)(start_va + phdr -> p_memsz);
+            uint64_t start_elf_seg = (uint64_t)((uint64_t)ehdr + phdr -> p_offset);
+            uint64_t start_pa      = (uint64_t)alloc_pages((PGROUNDUP((uint64_t)end_va) - PGROUNDDOWN((uint64_t)start_va)) >> 12); // 0x1000 aligned
+            create_mapping((uint64_t *)((uint64_t)(task -> pgd) + PA2VA_OFFSET), PGROUNDDOWN(start_va), start_pa - PA2VA_OFFSET, PGROUNDUP(end_va) - PGROUNDDOWN(start_va), perm);
+            start_pa = start_pa + (start_va - (uint64_t)PGROUNDDOWN(start_va)); // real start_pa
+            for (; start_va < end_file_va; start_va++, start_elf_seg++, start_pa++)
+                *(char*)start_pa = *(char*)start_elf_seg;
+            for (; start_va < end_va; start_va++, start_pa++)
+                *(char*)start_pa = 0;
+        }
+    }
+    task->thread.sepc = ehdr->e_entry;
+}
 
 void task_init() {
     srand(2024);
@@ -62,18 +94,8 @@ void task_init() {
         // user mode stack
         uint64_t u_mode_stack_pa = (uint64_t)kalloc() - PA2VA_OFFSET;
         create_mapping(pgd_va, USER_END - PGSIZE, u_mode_stack_pa, PGSIZE, PGTBL_W | PGTBL_R | PGTBL_U | PGTBL_VALID);
-        // u app (copied)
-        uint64_t *uapp_copy_pa = (uint64_t *)(alloc_pages(PGROUNDUP(_eramdisk - _sramdisk) >> 12) - PA2VA_OFFSET);
-        for (char *j = (char *)((uint64_t)uapp_copy_pa + PA2VA_OFFSET), *k = _sramdisk; k < _eramdisk; j++, k++) {
-            *j = *k;
-        }
-        create_mapping(pgd_va, 0, (uint64_t)uapp_copy_pa, _eramdisk - _sramdisk, PGTBL_R | PGTBL_W | PGTBL_X | PGTBL_U | PGTBL_VALID);
-        // test: print user page table
-        /*
-        for (int j = 0; j < 512; j++) {
-            printk("%d %llx\n", j, (pgd_va)[j]);
-        }
-        */
+        // u app (copied from elf)
+        load_program(task[i]);
     }
     printk("...task_init done!\n");
 }
