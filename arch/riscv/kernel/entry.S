@@ -7,16 +7,10 @@
     .globl _traps 
 _traps:
     # 1. save 32 registers and sepc to stack
-    sd t0, -8(sp) # save 2 temp regs in user stack
-    sd t1, -16(sp)
-    addi t0, sp, 0 # save user/kernel sp to tmp regs
-    csrr t1, sscratch
-    beq t1, x0, pre_trap_no_swap
-    csrw sscratch, t0 # swap user/kernel sp
-    addi sp, t1, 0
-pre_trap_no_swap:
-    ld t1, -16(t0) # save temp regs
-    ld t0, -8(t0)
+    csrrw sp, sscratch, sp
+    bne sp, x0, pre_trap_swap # caused by user mode
+    csrrw sp, sscratch, sp
+pre_trap_swap:
 
     addi sp, sp, -8
     sd x1, 0(sp)
@@ -158,27 +152,17 @@ pre_trap_no_swap:
     ld x1, 0(sp)
     addi sp, sp, 8
 
-    # 1. save 32 registers and sepc to stack
-    sd t0, -8(sp) # save 2 temp regs in kernel stack
-    sd t1, -16(sp)
-    addi t0, sp, 0 # save user/kernel sp to tmp regs
-    csrr t1, sscratch
-    beq t1, x0, post_trap_no_swap
-    csrw sscratch, t0 # swap user/kernel sp
-    addi sp, t1, 0
-post_trap_no_swap:
-    ld t1, -16(t0) # save temp regs
-    ld t0, -8(t0)
+    csrrw sp, sscratch, sp
+    bne sp, x0, post_trap_swap
+    csrrw sp, sscratch, sp
+post_trap_swap:
 
     # 4. return from trap
     sret
 
 __dummy:
     # swap sp and sscratch
-    csrr t0, sscratch
-    addi t1, sp, 0
-    csrw sscratch, t1
-    addi sp, t0, 0
+    csrrw sp, sscratch, sp
     sret
 
 __switch_to:
