@@ -69,7 +69,7 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
      * 可以使用 V bit 来判断页表项是否存在
     **/
     printk(BLUE "DBG in `create_mapping` " CLEAR "pgtbl: %llx, va: %llx, pa: %llx, sz: %llx, perm: %d\n", pgtbl, va, pa, sz, perm);
-
+    pgtbl = ((uint64_t)pgtbl & 0x8000000000000000U) ? pgtbl : (uint64_t *)((uint64_t)pgtbl + PA2VA_OFFSET);
     uint64_t size = PGROUNDUP(sz) >> 12;
     uint64_t offset, *base_addr, *tmp;
     for (uint64_t idx = 0; idx < size; idx++, va += 4096, pa += 4096) {

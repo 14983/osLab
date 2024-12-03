@@ -237,7 +237,6 @@ __switch_to:
     li t2, 60
     sll t0, t0, t2 # calculate MODE
     add t0, t0, t1
-    sfence.vma
     csrw satp, t0
     sfence.vma
 

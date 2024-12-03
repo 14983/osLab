@@ -4,13 +4,9 @@
 #include "proc.h"
 
 extern struct task_struct *current;
-extern struct task_struct *task[];
 
 uint64_t getpid() {
-    for (int i = 0; i < NR_TASKS; i++)
-        if (current == task[i])
-            return i;
-    return -1;
+    return current -> pid;
 }
 
 uint64_t write(uint64_t fd, const char* buf, uint64_t count) {

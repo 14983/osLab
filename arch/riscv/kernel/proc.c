@@ -30,7 +30,10 @@ void load_program(struct task_struct *task) {
             printk("\t" BLUE "memsz: " CLEAR "%x\n", phdr->p_memsz);
             printk("\t" BLUE "offset: " CLEAR "%x\n", phdr->p_offset);
             printk("\t" BLUE "filesz: " CLEAR "%x\n", phdr->p_filesz);
-            uint64_t perm = PGTBL_U | ((phdr -> p_flags) << 1) | PGTBL_VALID;
+            uint64_t perm = PGTBL_U | PGTBL_VALID | 
+                ((PF_X & phdr->p_flags) ? PGTBL_X : 0U) |
+                ((PF_W & phdr->p_flags) ? PGTBL_W : 0U) |
+                ((PF_R & phdr->p_flags) ? PGTBL_R : 0U);
             // [start_va, end_file_va): ELF segment
             // [end_file_va, end_va): 0
             uint64_t start_va      = (uint64_t)(phdr -> p_vaddr);
@@ -84,7 +87,7 @@ void task_init() {
         (task[i] -> thread).ra = (uint64_t)(__dummy);
         (task[i] -> thread).sp = (uint64_t)((void *)task[i] + PGSIZE);
         (task[i] -> thread).sepc = USER_START;
-        (task[i] -> thread).sstatus = (1U << SSTATUS_SUM) | (0U << SSTATUS_SPP) | (1U << SSTATUS_SPIE);
+        (task[i] -> thread).sstatus = (1U << SSTATUS_SUM) | (0U << SSTATUS_SPP);
         (task[i] -> thread).sscratch = USER_END;
         task[i] -> pgd = (uint64_t *)((uint64_t)kalloc() - PA2VA_OFFSET);
         uint64_t *pgd_va = (uint64_t *)((uint64_t)(task[i] -> pgd) + PA2VA_OFFSET);
