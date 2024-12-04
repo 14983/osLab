@@ -5,11 +5,11 @@
 
 extern struct task_struct *current;
 
-uint64_t getpid() {
+uint64_t sys_getpid() {
     return current -> pid;
 }
 
-uint64_t write(uint64_t fd, const char* buf, uint64_t count) {
+uint64_t sys_write(unsigned int fd, const char* buf, uint64_t count) {
     if (fd == 1U) { // print to console
         for (int i = 0; i < count; i++)
             sbi_debug_console_write_byte((uint8_t)buf[i]);

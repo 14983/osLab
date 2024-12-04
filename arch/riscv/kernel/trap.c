@@ -64,10 +64,10 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
             regs -> sepc += 4;
             if (regs -> x17 == SYS_WRITE) {
                 printk(GREEN "U-Mode write: " CLEAR);
-                regs -> x10 = write(regs -> x10, (char *)regs -> x11, regs -> x12);
+                regs -> x10 = sys_write(regs -> x10, (char *)regs -> x11, regs -> x12);
             }
             else if (regs -> x17 == SYS_GETPID)
-                regs -> x10 = getpid();
+                regs -> x10 = sys_getpid();
         } else
             printk(RED "TRAP INFO: " CLEAR "exception code: 0x%llx, sepc: 0x%llx\n", scause, sepc);
     }
