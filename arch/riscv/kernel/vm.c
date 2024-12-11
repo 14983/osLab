@@ -3,6 +3,8 @@
 #include "defs.h"
 #include "string.h"
 #include "mm.h"
+#include "vm.h"
+#include "proc.h"
 
 extern uint64_t _stext;
 extern uint64_t _etext;
@@ -10,6 +12,11 @@ extern uint64_t _srodata;
 extern uint64_t _erodata;
 extern uint64_t _sdata;
 extern uint64_t _edata;
+
+extern char _sramdisk[];
+extern char _eramdisk[];
+
+extern struct task_struct *current;
 
 /* early_pgtbl: map memory from 0x80000000 to 0xffffffe000000000 */
 uint64_t early_pgtbl[512] __attribute__((__aligned__(0x1000)));
@@ -32,7 +39,6 @@ void setup_vm() {
 /* swapper_pg_dir: kernel pagetable 根目录，在 setup_vm_final 进行映射 */
 uint64_t swapper_pg_dir[512] __attribute__((__aligned__(0x1000)));
 
-void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint64_t perm);
 void setup_vm_final() {
     memset(swapper_pg_dir, 0x0, PGSIZE);
 
@@ -68,7 +74,7 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
      * 创建多级页表的时候可以使用 kalloc() 来获取一页作为页表目录
      * 可以使用 V bit 来判断页表项是否存在
     **/
-    printk(BLUE "DBG in `create_mapping` " CLEAR "pgtbl: %llx, va: %llx, pa: %llx, sz: %llx, perm: %d\n", pgtbl, va, pa, sz, perm);
+    DBG("pgtbl: %llx, va: %llx, pa: %llx, sz: %llx, perm: %d", pgtbl, va, pa, sz, perm);
     pgtbl = ((uint64_t)pgtbl & 0x8000000000000000U) ? pgtbl : (uint64_t *)((uint64_t)pgtbl + PA2VA_OFFSET);
     uint64_t size = PGROUNDUP(sz) >> 12;
     uint64_t offset, *base_addr, *tmp;
@@ -110,4 +116,81 @@ void find_phy(uint64_t *va) {
     tmp = base_address[offset3];
     base_address = (uint64_t *)(tmp >> 10 << 12);
     printk("level 3 page: %llx, final address: %llx\n", tmp, base_address);
+}
+
+struct vm_area_struct *find_vma(struct mm_struct *mm, uint64_t addr) {
+    struct vm_area_struct *s = mm -> mmap;
+    while (s) {
+        if (addr >= s -> vm_start && addr < s -> vm_end)
+            return s;
+        else
+            s = s -> vm_next;
+    }
+    return (struct vm_area_struct *)NULL;
+}
+
+uint64_t do_mmap(struct mm_struct *mm, uint64_t addr, uint64_t len, uint64_t vm_pgoff, uint64_t vm_filesz, uint64_t flags) {
+    struct vm_area_struct* n = (struct vm_area_struct *)kalloc();
+    // append to mm_struct
+    n -> vm_next = mm -> mmap;
+    if (mm -> mmap)
+        mm -> mmap -> vm_prev = n;
+    n -> vm_prev = (struct vm_area_struct *)NULL;
+    n -> vm_mm = mm;
+    mm -> mmap = n;
+    // set properties
+    n -> vm_start = addr;
+    n -> vm_end = (uint64_t)addr + (uint64_t)len;
+    n -> vm_flags = flags;
+    n -> vm_pgoff = vm_pgoff;
+    n -> vm_filesz = vm_filesz;
+}
+
+void do_page_fault(struct pt_regs *regs) {
+    uint64_t stval = csr_read(stval);
+    uint64_t scause = csr_read(scause);
+    struct vm_area_struct *v = find_vma(&(current -> mm), stval);
+    // judge if the address is legal
+    if (v == (struct vm_area_struct*)NULL) {
+        ERR("no such vma");
+    } else {
+        DBG("%llx in PC=0x%llx: \n"
+            "\tvm_start = %lx\n\tvm_end = %llx\n\tvm_flags = %llx\n"
+            "\tvm_pgoff = %llx\n\tvm_filesz = %llx",
+            stval, regs->sepc, v -> vm_start, v -> vm_end, v -> vm_flags,
+            v -> vm_pgoff, v -> vm_filesz
+        );
+    }
+    // judge if the operation is legal
+    if (
+        (scause == 12) && (!((v -> vm_flags) & VM_EXEC)) || // inst but not executable
+        (scause == 13) && (!((v -> vm_flags) & VM_READ)) || // read but not readable
+        (scause == 15) && (!((v -> vm_flags) & VM_WRITE))   // write but not writable
+    ) {
+        ERR("operation illegal");
+    }
+    uint64_t perm = PGTBL_VALID | PGTBL_U |
+        ((v -> vm_flags & VM_EXEC)  ? PGTBL_X : 0) |
+        ((v -> vm_flags & VM_WRITE) ? PGTBL_W : 0) |
+        ((v -> vm_flags & VM_READ)  ? PGTBL_R : 0);
+    DBG("perm: %d", perm);
+    if (v -> vm_flags & VM_ANON) {
+        DBG("anonymous page");
+        create_mapping(current->pgd, PGROUNDDOWN(stval), (uint64_t)kalloc() - PA2VA_OFFSET, PGSIZE, perm);
+    } else {
+        DBG("not anonymous page");
+        char*    target_page = kalloc(); // virtual address
+        uint64_t round_down  = PGROUNDDOWN(stval);
+        char*    f_base_addr = (char*)((uint64_t)_sramdisk + v -> vm_pgoff); // virtual address
+        char*    f_file_end  = f_base_addr + v->vm_filesz;
+        char*    f_mem_end   = f_base_addr + (v->vm_end - v->vm_start);
+        for (uint64_t i = 0; i < PGSIZE; i++) {
+            char *target_position = f_base_addr + (round_down + i - v->vm_start);
+            if (target_position >= f_base_addr && target_position < f_file_end)
+                target_page[i] = *target_position;
+            else
+                target_page[i] = 0;
+        }
+        create_mapping(current->pgd, PGROUNDDOWN(stval), (uint64_t)target_page - PA2VA_OFFSET, PGSIZE, perm);
+    }
 }

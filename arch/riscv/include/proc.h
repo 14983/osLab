@@ -2,6 +2,7 @@
 #define __PROC_H__
 
 #include "stdint.h"
+#include "vm.h"
 
 #define NR_TASKS (1 + 4)
 
@@ -27,6 +28,7 @@ struct task_struct {
 
     struct thread_struct thread;
     uint64_t *pgd;
+    struct mm_struct mm;
 };
 
 /* 线程初始化，创建 NR_TASKS 个线程 */

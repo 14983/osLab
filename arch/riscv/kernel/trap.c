@@ -5,18 +5,6 @@
 #include "defs.h"
 #include "syscall.h"
 
-struct pt_regs {
-    uint64_t sepc;
-    uint64_t x31, x30, x29, x28;
-    uint64_t x27, x26, x25, x24;
-    uint64_t x23, x22, x21, x20;
-    uint64_t x19, x18, x17, x16;
-    uint64_t x15, x14, x13, x12;
-    uint64_t x11, x10, x9, x8;
-    uint64_t x7, x6, x5, x4;
-    uint64_t x3, x1;
-};
-
 void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
     // 通过 `scause` 判断 trap 类型
     // 如果是 interrupt 判断是否是 timer interrupt
@@ -47,7 +35,7 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
         regs -> x3, regs -> x1
     );
     */
-    if (scause & ((uint64_t)1 << 63) == (uint64_t)1 << 63) {
+    if ((scause & ((uint64_t)1 << 63)) == (uint64_t)1 << 63) {
         // interrupt
         if ((scause & (((uint64_t)1 << 63) - 1)) == 5) {
             // timer interrupt
@@ -68,7 +56,16 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
             }
             else if (regs -> x17 == SYS_GETPID)
                 regs -> x10 = sys_getpid();
-        } else
+        } else if (scause == 12 || scause == 13 || scause == 15) { // inst, read, write page fault
+            if (scause == 12)
+                printk(RED "TRAP INFO: " CLEAR "Instruction Page Fault\n");
+            else if (scause == 13)
+                printk(RED "TRAP INFO: " CLEAR "Load Page Fault\n");
+            else
+                printk(RED "TRAP INFO: " CLEAR "Store/AMO Page Fault\n");
+            do_page_fault(regs);
+        } else {
             printk(RED "TRAP INFO: " CLEAR "exception code: 0x%llx, sepc: 0x%llx\n", scause, sepc);
+        }
     }
 }

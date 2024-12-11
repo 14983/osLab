@@ -17,4 +17,11 @@
 
 int printk(const char *, ...);
 
+#define DBG(format, ...) \
+    printk(BLUE "DBG in `%s`: " CLEAR format "\n", __func__, ##__VA_ARGS__)
+#define ERR(format, ...) \
+    printk(RED "ERR in `%s`: " CLEAR format "\n", __func__, ##__VA_ARGS__); \
+    while(1)
+
+
 #endif
