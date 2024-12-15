@@ -56,6 +56,8 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
             }
             else if (regs -> x17 == SYS_GETPID)
                 regs -> x10 = sys_getpid();
+            else if (regs -> x17 == SYS_CLONE)
+                regs -> x10 = do_fork(regs);
         } else if (scause == 12 || scause == 13 || scause == 15) { // inst, read, write page fault
             if (scause == 12)
                 printk(RED "TRAP INFO: " CLEAR "Instruction Page Fault\n");

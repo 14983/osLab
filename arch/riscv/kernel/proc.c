@@ -16,6 +16,8 @@ struct task_struct *idle;           // idle process
 struct task_struct *current;        // 指向当前运行线程的 task_struct
 struct task_struct *task[NR_TASKS]; // 线程数组，所有的线程都保存在此
 
+uint64_t nr_tasks = 1;
+
 void load_program(struct task_struct *task) {
     Elf64_Ehdr *ehdr = (Elf64_Ehdr *)_sramdisk;
     Elf64_Phdr *phdrs = (Elf64_Phdr *)(_sramdisk + ehdr->e_phoff);
@@ -73,7 +75,7 @@ void task_init() {
     //     - ra 设置为 __dummy（见 4.2.2）的地址
     //     - sp 设置为该线程申请的物理页的高地址
 
-    for (uint64_t i = 1; i < NR_TASKS; i++){
+    for (uint64_t i = 1; i <= nr_tasks; i++){
         task[i] = (struct task_struct*)kalloc();
         task[i] -> state = TASK_RUNNING;
         task[i] -> pid = i;
@@ -133,7 +135,7 @@ void schedule() {
     uint64_t time_slice, chosen_task;
     while (1) {
         time_slice = 0;
-        for (int i = 0; i < NR_TASKS; i++) {
+        for (int i = 0; i <= nr_tasks; i++) {
             if (task[i] -> counter > time_slice) {
                 time_slice = task[i] -> counter;
                 chosen_task = i;
@@ -141,7 +143,7 @@ void schedule() {
         }
         if (time_slice > 0) break;
         printk("\n");
-        for (int i = 1; i < NR_TASKS; i++) {
+        for (int i = 1; i <= nr_tasks; i++) {
             task[i] -> counter = task[i] -> priority;
             printk("SET [PID = %d PRIORITY = %d COUNTER = %d]\n", task[i] -> pid, task[i] -> priority, task[i] -> counter);
         }

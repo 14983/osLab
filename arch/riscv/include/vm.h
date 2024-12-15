@@ -27,6 +27,13 @@ struct mm_struct {
 };
 
 /*
+* @va     : the va to find
+* 
+* @return : NULL if not valid, else the physical address
+*/
+uint64_t *find_phy(uint64_t *pgd, uint64_t *va);
+
+/*
 * @mm       : current thread's mm_struct
 * @addr     : the va to look up
 *

@@ -100,22 +100,28 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
     }
 }
 
-void find_phy(uint64_t *va) {
+uint64_t *find_phy(uint64_t *pgd, uint64_t *va) {
+    // TODO: change me
     uint64_t *base_address, offset1, offset2, offset3, tmp;
-    base_address = swapper_pg_dir;
+    base_address = pgd;
+    base_address = ((uint64_t)base_address & 0x8000000000000000U) ? base_address : (uint64_t *)((uint64_t)base_address + PA2VA_OFFSET);
     offset1 = ((uint64_t)va >> 30) & (((uint64_t)1 << 9) - 1);
     offset2 = ((uint64_t)va >> 21) & (((uint64_t)1 << 9) - 1);
     offset3 = ((uint64_t)va >> 12) & (((uint64_t)1 << 9) - 1);
     printk(BLUE "DBG in `find_phy` " CLEAR "%llx %llx, %llx, %llx\n", va, offset1, offset2, offset3);
     tmp = base_address[offset1];
+    if (!(tmp & PGTBL_VALID)) return NULL;
     base_address = (uint64_t *)((tmp >> 10 << 12) + PA2VA_OFFSET);
     printk("level 1 page: %llx, base address: %llx\n", tmp, (uint64_t)base_address - PA2VA_OFFSET);
     tmp = base_address[offset2];
+    if (!(tmp & PGTBL_VALID)) return NULL;
     base_address = (uint64_t *)((tmp >> 10 << 12) + PA2VA_OFFSET);
     printk("level 2 page: %llx, base address: %llx\n", tmp, (uint64_t)base_address - PA2VA_OFFSET);
     tmp = base_address[offset3];
+    if (!(tmp & PGTBL_VALID)) return NULL;
     base_address = (uint64_t *)(tmp >> 10 << 12);
     printk("level 3 page: %llx, final address: %llx\n", tmp, base_address);
+    return base_address;
 }
 
 struct vm_area_struct *find_vma(struct mm_struct *mm, uint64_t addr) {
