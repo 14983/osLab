@@ -39,10 +39,7 @@ void load_program(struct task_struct *task) {
             // [start_va, end_file_va): ELF segment
             // [end_file_va, end_va): 0
             uint64_t start_va      = (uint64_t)(phdr -> p_vaddr);
-            uint64_t end_file_va   = (uint64_t)(start_va + phdr -> p_filesz);
             uint64_t end_va        = (uint64_t)(start_va + phdr -> p_memsz);
-            uint64_t start_elf_seg = (uint64_t)((uint64_t)ehdr + phdr -> p_offset);
-            uint64_t start_pa      = (uint64_t)alloc_pages((PGROUNDUP((uint64_t)end_va) - PGROUNDDOWN((uint64_t)start_va)) >> 12); // 0x1000 aligned
             do_mmap(&(task -> mm), start_va, end_va - start_va, phdr -> p_offset, phdr -> p_filesz, perm);
         }
     }

@@ -101,7 +101,6 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
 }
 
 uint64_t *find_phy(uint64_t *pgd, uint64_t *va) {
-    // TODO: change me
     uint64_t *base_address, offset1, offset2, offset3, tmp;
     base_address = pgd;
     base_address = ((uint64_t)base_address & 0x8000000000000000U) ? base_address : (uint64_t *)((uint64_t)base_address + PA2VA_OFFSET);
@@ -150,6 +149,7 @@ uint64_t do_mmap(struct mm_struct *mm, uint64_t addr, uint64_t len, uint64_t vm_
     n -> vm_flags = flags;
     n -> vm_pgoff = vm_pgoff;
     n -> vm_filesz = vm_filesz;
+    return addr;
 }
 
 void do_page_fault(struct pt_regs *regs) {

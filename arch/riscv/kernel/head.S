@@ -4,6 +4,7 @@
     .extern setup_vm # in vm.c
     .extern early_pgtbl # in vm.c
     .extern setup_vm_final # in vm.c
+    .extern clock_set_next_event # in clock.c
     .section .text.init
     .globl _start
 _start:
@@ -28,17 +29,7 @@ _start:
     or t0, t0, t1
     csrw sie, t0
     # set first time interrupt
-    rdtime a0
-    li t0, 10000000
-    add a0, a0, t0
-    add a1, x0, x0
-    add a2, x0, x0
-    add a3, x0, x0
-    add a4, x0, x0
-    add a5, x0, x0
-    add a6, x0, x0
-    li a7, 0x54494d45
-    ecall
+    jal clock_set_next_event
     # set sstatus[SIE] = 1
     ## lab 4 update: delete
     # csrr t0, sstatus
