@@ -68,7 +68,9 @@ void create_mapping(uint64_t *pgtbl, uint64_t va, uint64_t pa, uint64_t sz, uint
      * 创建多级页表的时候可以使用 kalloc() 来获取一页作为页表目录
      * 可以使用 V bit 来判断页表项是否存在
     **/
+#if LOG
     printk(BLUE "DBG in `create_mapping` " CLEAR "pgtbl: %llx, va: %llx, pa: %llx, sz: %llx, perm: %d\n", pgtbl, va, pa, sz, perm);
+#endif
     pgtbl = ((uint64_t)pgtbl & 0x8000000000000000U) ? pgtbl : (uint64_t *)((uint64_t)pgtbl + PA2VA_OFFSET);
     uint64_t size = PGROUNDUP(sz) >> 12;
     uint64_t offset, *base_addr, *tmp;

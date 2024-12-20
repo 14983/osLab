@@ -17,4 +17,20 @@
 
 int printk(const char *, ...);
 
+#if LOG
+#define Log(format, ...) \
+    printk("\33[1;35m[%s,%d,%s] " format "\33[0m\n", \
+        __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+#else
+#define Log(format, ...);
+#endif
+
+#if LOG
+#define Err(format, ...) \
+    printk("\33[1;31m[%s,%d,%s] " format "\33[0m\n", \
+        __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+#else
+#define Err(format, ...);
+#endif
+
 #endif

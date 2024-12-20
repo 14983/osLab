@@ -25,6 +25,9 @@ struct sbiret sbi_system_reset(uint32_t reset_type, uint32_t reset_reason);
 #define SBI_DEBUG_CONSOLE_WRITE 0x4442434e
 #define SBI_SYSTEM_RESET 0x53525354
 #define SBI_SET_TIMER 0x54494d45
+#define SBI_DEBUG_CONSOLE_READ 0x4442434e
+
+struct sbiret sbi_debug_console_read(unsigned long num_bytes, unsigned long base_addr_lo, unsigned long base_addr_hi);
 
 uint64_t get_cycles();
 void clock_set_next_event();

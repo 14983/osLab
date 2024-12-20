@@ -47,7 +47,7 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
         regs -> x3, regs -> x1
     );
     */
-    if (scause & ((uint64_t)1 << 63) == (uint64_t)1 << 63) {
+    if ((scause & ((uint64_t)1 << 63)) == (uint64_t)1 << 63) {
         // interrupt
         if ((scause & (((uint64_t)1 << 63) - 1)) == 5) {
             // timer interrupt
@@ -60,10 +60,14 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
     } else {
         // exception
         if (scause == (uint64_t)0x8) { // Environment call from U-mode
+#if LOG
             printk(RED "TRAP INFO: " CLEAR "Environment call from U-mode, SYSCALL_ID = %d\n", regs -> x17);
+#endif
             regs -> sepc += 4;
             if (regs -> x17 == SYS_WRITE) {
+#if LOG
                 printk(GREEN "U-Mode write: " CLEAR);
+#endif
                 regs -> x10 = sys_write(regs -> x10, (char *)regs -> x11, regs -> x12);
             }
             else if (regs -> x17 == SYS_GETPID)

@@ -41,3 +41,7 @@ struct sbiret sbi_set_timer(uint64_t stime_value) {
     struct sbiret ret = sbi_ecall(SBI_SET_TIMER, 0, stime_value, 0, 0, 0, 0, 0);
     return ret;
 }
+
+struct sbiret sbi_debug_console_read(unsigned long num_bytes, unsigned long base_addr_lo, unsigned long base_addr_hi) {
+    struct sbiret ret = sbi_ecall(SBI_DEBUG_CONSOLE_READ, 1, num_bytes, base_addr_lo, base_addr_hi, 0, 0, 0);
+}

@@ -4,18 +4,20 @@ GCC		:=	$(CROSS)gcc
 LD		:=	$(CROSS)ld
 OBJCOPY	:=	$(CROSS)objcopy
 OBJDUMP	:=	$(CROSS)objdump
+LOG     :=  0
 
 ISA		:=	rv64imafd
 ABI		:=	lp64
 
 INCLUDE	:=	-I $(shell pwd)/include -I $(shell pwd)/arch/riscv/include
 CF		:=	-march=$(ISA) -mabi=$(ABI) -mcmodel=medany -fno-builtin -ffunction-sections -fdata-sections -nostartfiles -nostdlib -nostdinc -static -lgcc -Wl,--nmagic -Wl,--gc-sections -g -fno-pie
-CFLAG   :=  $(CF) $(INCLUDE)
+CFLAG   :=  $(CF) $(INCLUDE) -DLOG=$(LOG)
 
 BIOS    := default
 
 .PHONY:all run debug clean
 all: clean
+	$(MAKE) -C fs all
 	$(MAKE) -C user all
 	$(MAKE) -C lib all
 	$(MAKE) -C init all
@@ -31,6 +33,7 @@ debug: all
 	@qemu-system-riscv64 -nographic -machine virt -kernel vmlinux -bios $(BIOS) -S -s
 
 clean:
+	$(MAKE) -C fs clean
 	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
 	$(MAKE) -C init clean

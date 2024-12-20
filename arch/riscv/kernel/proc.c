@@ -24,12 +24,14 @@ void load_program(struct task_struct *task) {
     for (int i = 0; i < ehdr->e_phnum; ++i) {
         Elf64_Phdr *phdr = phdrs + i;
         if (phdr->p_type == PT_LOAD) {
+#if LOG
             printk(RED "ELF debugging: \n" CLEAR);
             printk("\t" BLUE "pflag: " CLEAR "%x\n", phdr->p_flags);
             printk("\t" BLUE "vaddr: " CLEAR "%x\n", phdr->p_vaddr);
             printk("\t" BLUE "memsz: " CLEAR "%x\n", phdr->p_memsz);
             printk("\t" BLUE "offset: " CLEAR "%x\n", phdr->p_offset);
             printk("\t" BLUE "filesz: " CLEAR "%x\n", phdr->p_filesz);
+#endif
             uint64_t perm = PGTBL_U | PGTBL_VALID | 
                 ((PF_X & phdr->p_flags) ? PGTBL_X : 0U) |
                 ((PF_W & phdr->p_flags) ? PGTBL_W : 0U) |
@@ -103,22 +105,6 @@ void task_init() {
     printk("...task_init done!\n");
 }
 
-void dummy() {
-    uint64_t MOD = 1000000007;
-    uint64_t auto_inc_local_var = 0;
-    int last_counter = -1;
-    while (1) {
-        if ((last_counter == -1 || current->counter != last_counter) && current->counter > 0) {
-            if (current->counter == 1) {
-                --(current->counter);   // forced the counter to be zero if this thread is going to be scheduled
-            }                           // in case that the new counter is also 1, leading the information not printed.
-            last_counter = current->counter;
-            auto_inc_local_var = (auto_inc_local_var + 1) % MOD;
-            printk("[PID = %d] is running. auto_inc_local_var = %d\n", current->pid, auto_inc_local_var);
-        }
-    }
-}
-
 void do_timer() {
     if (current == task[0]) { // idle task
         schedule();
@@ -149,7 +135,9 @@ void schedule() {
         printk("\n");
         for (int i = 1; i < NR_TASKS; i++) {
             task[i] -> counter = task[i] -> priority;
+#if LOG
             printk("SET [PID = %d PRIORITY = %d COUNTER = %d]\n", task[i] -> pid, task[i] -> priority, task[i] -> counter);
+#endif
         }
     }
     switch_to(task[chosen_task]);
@@ -157,7 +145,9 @@ void schedule() {
 
 void switch_to(struct task_struct *next) {
     if (current != next) {
+#if LOG
         printk("\nswitch to [PID = %d PRIORITY = %d COUNTER = %d]\n", next -> pid, next -> priority, next -> counter);
+#endif
         struct task_struct *tmp = current;
         current = next;
         __switch_to(tmp, next);
