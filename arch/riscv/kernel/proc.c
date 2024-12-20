@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "printk.h"
 #include "elf.h"
+#include "fs.h"
 
 extern void __dummy();
 extern void __switch_to(struct task_struct *prev, struct task_struct *next);
@@ -91,6 +92,7 @@ void task_init() {
         (task[i] -> thread).sepc = USER_START;
         (task[i] -> thread).sstatus = (1U << SSTATUS_SUM) | (0U << SSTATUS_SPP);
         (task[i] -> thread).sscratch = USER_END;
+        task[i] -> files = file_init();
         task[i] -> pgd = (uint64_t *)((uint64_t)kalloc() - PA2VA_OFFSET);
         uint64_t *pgd_va = (uint64_t *)((uint64_t)(task[i] -> pgd) + PA2VA_OFFSET);
         // copy kernel page table to user page table

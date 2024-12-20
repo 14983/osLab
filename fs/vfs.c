@@ -16,18 +16,31 @@ char uart_getchar() {
 }
 
 int64_t stdin_read(struct file *file, void *buf, uint64_t len) {
-    // todo: use uart_getchar() to get `len` chars
+    for (uint64_t i = 0; i < len; i++)
+        ((char*)buf)[i] = uart_getchar();
+    return len;
 }
 
 int64_t stdout_write(struct file *file, const void *buf, uint64_t len) {
+    printk(BLUE);
     char to_print[len + 1];
     for (int i = 0; i < len; i++) {
         to_print[i] = ((const char *)buf)[i];
     }
     to_print[len] = 0;
-    return printk(buf);
+    int64_t ret = printk(buf);
+    printk(CLEAR);
+    return ret;
 }
 
 int64_t stderr_write(struct file *file, const void *buf, uint64_t len) {
-    // todo
+    printk(RED);
+    char to_print[len + 1];
+    for (int i = 0; i < len; i++) {
+        to_print[i] = ((const char *)buf)[i];
+    }
+    to_print[len] = 0;
+    int64_t ret = printk(buf);
+    printk(CLEAR);
+    return ret;
 }

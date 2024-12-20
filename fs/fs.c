@@ -6,8 +6,31 @@
 #include "fat32.h"
 
 struct files_struct *file_init() {
-    // todo: alloc pages for files_struct, and initialize stdin, stdout, stderr
-    struct files_struct *ret = NULL;
+    struct files_struct *ret = alloc_pages(PGROUNDUP(sizeof(struct files_struct)) / PGSIZE);
+    // stdin
+    ret->fd_array[0].opened = 1;
+    ret->fd_array[0].perms = FILE_READABLE;
+    ret->fd_array[0].cfo = 0;
+    ret->fd_array[0].lseek = NULL;
+    ret->fd_array[0].write = NULL;
+    ret->fd_array[0].read = stdin_read;
+    // stdout
+    ret->fd_array[1].opened = 1;
+    ret->fd_array[1].perms = FILE_WRITABLE;
+    ret->fd_array[1].cfo = 0;
+    ret->fd_array[1].lseek = NULL;
+    ret->fd_array[1].write = stdout_write;
+    ret->fd_array[1].read = NULL;
+    // stderr
+    ret->fd_array[2].opened = 1;
+    ret->fd_array[2].perms = FILE_WRITABLE;
+    ret->fd_array[2].cfo = 0;
+    ret->fd_array[2].lseek = NULL;
+    ret->fd_array[2].write = stderr_write;
+    ret->fd_array[2].read = NULL;
+    // other unopened files
+    for (uint64_t i = 3; i < MAX_FILE_NUMBER; i++)
+        ret -> fd_array[i].opened = 0;
     return ret;
 }
 
