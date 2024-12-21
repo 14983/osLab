@@ -64,3 +64,6 @@ vmlinux.asm
 user/uapp
 *.bin
 *.asm
+
+# bonus
+disk.img

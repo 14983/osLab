@@ -134,7 +134,6 @@ void schedule() {
             }
         }
         if (time_slice > 0) break;
-        printk("\n");
         for (int i = 1; i < NR_TASKS; i++) {
             task[i] -> counter = task[i] -> priority;
 #if LOG

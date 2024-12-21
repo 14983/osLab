@@ -31,14 +31,23 @@ void trap_handler(uint64_t scause, uint64_t sepc, struct pt_regs *regs) {
     } else {
         // exception
         switch (regs->x17) {
+            case SYS_CLOSE:
+                regs->x10 = sys_close(regs->x10);
+                break;
             case SYS_WRITE:
                 regs->x10 = sys_write(regs->x10, (const char *)regs->x11, regs->x12);
                 break;
             case SYS_READ:
                 regs->x10 = sys_read(regs->x10, (char *)regs->x11, regs->x12);
                 break;
+            case SYS_LSEEK:
+                regs->x10 = sys_lseek(regs->x10, regs->x11, regs->x12);
+                break;
             case SYS_GETPID:
                 regs->x10 = sys_getpid();
+                break;
+            case SYS_OPENAT:
+                regs->x10 = sys_openat(regs->x10, (const char *)regs->x11, regs->x12);
                 break;
             default:
                 Err("not support syscall id = %d", regs->x17);

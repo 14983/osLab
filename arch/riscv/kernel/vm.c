@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "string.h"
 #include "mm.h"
+#include "virtio.h"
 
 extern uint64_t _stext;
 extern uint64_t _etext;
@@ -45,6 +46,9 @@ void setup_vm_final() {
 
     // mapping other memory -|W|R|V
     create_mapping(swapper_pg_dir, (uint64_t)&_sdata, (uint64_t)&_sdata - PA2VA_OFFSET, (uint64_t)PHY_END + (uint64_t)PA2VA_OFFSET - (uint64_t)&_sdata, PGTBL_W | PGTBL_R | PGTBL_VALID);
+
+    // mapping VirtIO driver
+    create_mapping(swapper_pg_dir, io_to_virt(VIRTIO_START), VIRTIO_START, VIRTIO_SIZE * VIRTIO_COUNT, PGTBL_W | PGTBL_R | PGTBL_VALID);
 
     // set satp with swapper_pg_dir
     csr_write(satp, (((uint64_t)swapper_pg_dir - PA2VA_OFFSET)>> 12) & (((uint64_t)1 << 44) - 1) | ((uint64_t)8 << 60));

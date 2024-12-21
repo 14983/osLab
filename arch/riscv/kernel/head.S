@@ -4,6 +4,8 @@
     .extern setup_vm # in vm.c
     .extern early_pgtbl # in vm.c
     .extern setup_vm_final # in vm.c
+    .extern virtio_dev_init
+    .extern mbr_init
     .section .text.init
     .globl _start
 _start:
@@ -22,6 +24,8 @@ _start:
     jal mm_init
     jal setup_vm_final
     jal task_init
+    jal virtio_dev_init
+    jal mbr_init
     # set sie[STIE] = 1
     csrr t0, sie
     li t1, 0x00000020
